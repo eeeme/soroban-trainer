@@ -11,6 +11,8 @@ export interface Attempt {
   ms: number
   sessionId: string
   at: number
+  /** 回答中に考え方（ヘルプ）を見たか */
+  hinted?: boolean
 }
 
 export interface PatternStats {
@@ -69,6 +71,9 @@ export function applyAttempt(
   if (attempt.mode === 'focus') {
     if (!attempt.correct) {
       next.box = 1
+      next.streak = 0
+    } else if (attempt.hinted) {
+      // ヘルプを見て正解した場合は箱を上げない
       next.streak = 0
     } else if (s.box >= MAX_BOX) {
       next.streak = withinBase ? s.streak + 1 : 0

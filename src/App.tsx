@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DEFAULT_SETTINGS, type Settings } from './domain/settings.ts'
 import { applyAttempt, baseTime, type Attempt, type Mode, type StatsMap } from './domain/stats.ts'
+import { Guide } from './screens/Guide.tsx'
 import { Home } from './screens/Home.tsx'
 import { Session } from './screens/Session.tsx'
 import { SettingsScreen } from './screens/SettingsScreen.tsx'
@@ -22,6 +23,7 @@ function App() {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [session, setSession] = useState<{ mode: Mode; key: number } | null>(null)
+  const [guideOpen, setGuideOpen] = useState(false)
   const statsRef = useRef<StatsMap>({})
   const settingsRef = useRef<Settings>(DEFAULT_SETTINGS)
 
@@ -95,6 +97,8 @@ function App() {
 
   if (!loaded) return <div className="app" />
 
+  if (guideOpen) return <Guide onBack={() => setGuideOpen(false)} />
+
   if (session) {
     return (
       <div className="app">
@@ -120,6 +124,7 @@ function App() {
             settings={settings}
             baseMs={baseMs}
             onStart={(mode) => setSession({ mode, key: Date.now() })}
+            onOpenGuide={() => setGuideOpen(true)}
           />
         )}
         {tab === 'weakmap' && <WeakMap stats={stats} baseMs={baseMs} />}

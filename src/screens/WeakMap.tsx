@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { CATEGORIES, CATEGORY_CROSS_LABEL, CATEGORY_LABEL, classify } from '../domain/classify.ts'
+import { HelpSheet } from '../components/HelpSheet.tsx'
+import { explain } from '../domain/method.ts'
 import {
   ALL_PATTERN_IDS,
   ALL_PATTERNS,
@@ -128,27 +130,32 @@ export function WeakMap({ stats, baseMs }: Props) {
 }
 
 function Detail({ id, s, baseMs }: { id: PatternId; s: PatternStats | undefined; baseMs: number | null }) {
-  const label = patternLabel(parsePatternId(id))
-  if (!s || s.recentMs.length === 0) {
-    return (
-      <p>
-        <span className="mono">{label}</span> <span className="muted">未計測</span>
-      </p>
-    )
-  }
-  const m = avgMs(s)!
+  const [helpOpen, setHelpOpen] = useState(false)
+  const p = parsePatternId(id)
+  const method = explain(p)
+  const m = s ? avgMs(s) : null
   return (
-    <p>
-      <span className="mono detail-label">{label}</span>
-      <span className="muted">{CATEGORY_LABEL[s.category]}</span>
-      <br />
-      <span className="mono">
-        平均 {(m / 1000).toFixed(2)}秒・誤答 {errorCount(s)}/{s.recentCorrect.length}・箱{s.box}
-      </span>
-      <span className="muted">
-        {s.graduated ? '・卒業' : isWeak(s, baseMs) ? '・苦手' : ''}
-      </span>
-    </p>
+    <div>
+      <p>
+        <span className="mono detail-label">{patternLabel(p)}</span>
+        <span className="muted">{CATEGORY_LABEL[method.category]}</span>
+        <span className="mono rule-inline"> {method.rule}</span>
+      </p>
+      <p className="mono small">
+        {s && m !== null ? (
+          <>
+            平均 {(m / 1000).toFixed(2)}秒・誤答 {errorCount(s)}/{s.recentCorrect.length}・箱{s.box}
+            <span className="muted">{s.graduated ? '・卒業' : isWeak(s, baseMs) ? '・苦手' : ''}</span>
+          </>
+        ) : (
+          <span className="muted">未計測</span>
+        )}
+      </p>
+      <button type="button" className="text-btn" onClick={() => setHelpOpen(true)}>
+        考え方と珠の動きを見る
+      </button>
+      {helpOpen && <HelpSheet pattern={p} onClose={() => setHelpOpen(false)} />}
+    </div>
   )
 }
 

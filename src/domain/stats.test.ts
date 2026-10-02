@@ -46,6 +46,12 @@ describe('applyAttempt', () => {
     expect(s.graduated).toBe(true)
   })
 
+  it('ヘルプを見て正解しても箱は上がらない', () => {
+    const s: PatternStats = { ...emptyStats('add-3-4'), box: 2 }
+    const next = applyAttempt(s, { ...att('add-3-4', true, 500, 'focus'), hinted: true }, 1000)
+    expect(next.box).toBe(2)
+  })
+
   it('診断で誤答すると卒業が取り消される', () => {
     const s: PatternStats = { ...emptyStats('add-3-4'), box: 4, graduated: true }
     const next = applyAttempt(s, att('add-3-4', false, 500, 'diagnosis'), 1000)

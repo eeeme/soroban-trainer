@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { playCorrect, playWrong } from '../audio.ts'
+import { HelpSheet } from '../components/HelpSheet.tsx'
 import { Soroban } from '../components/Soroban.tsx'
 import { rodsToValue } from '../domain/abacus.ts'
 import { CATEGORY_LABEL, classify, solutionSteps } from '../domain/classify.ts'
+import { explain } from '../domain/method.ts'
 import {
   answerValue,
   parsePatternId,
@@ -33,6 +35,7 @@ interface Result {
   correct: boolean
   ms: number
   given: number
+  hinted: boolean
 }
 
 const MODE_TITLE: Record<Mode, string> = {
@@ -66,6 +69,9 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
   const [phase, setPhase] = useState<Phase>(pattern ? 'answer' : 'done')
   const [results, setResults] = useState<Result[]>([])
   const [questionKey, setQuestionKey] = useState(0)
+  const [helpOpen, setHelpOpen] = useState(false)
+  /** この問題でヘルプを見たか */
+  const [hinted, setHinted] = useState(false)
   const startRef = useRef(0)
   const timers = useRef<number[]>([])
 
@@ -94,6 +100,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
     setPattern(next)
     setRods(toRods(startValue(next)))
     setPhase('answer')
+    setHinted(false)
     setQuestionKey((k) => k + 1)
   }, [choose, index, pattern])
 
@@ -103,8 +110,8 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
     const ms = Math.round(performance.now() - startRef.current)
     const given = rodsToValue(answered)
     const correct = given === answerValue(pattern)
-    setResults((r) => [...r, { pattern, correct, ms, given }])
-    void onRecord({ patternId: patternId(pattern), mode, correct, ms, sessionId, at: Date.now() }).then(
+    setResults((r) => [...r, { pattern, correct, ms, given, hinted }])
+    void onRecord({ patternId: patternId(pattern), mode, correct, ms, sessionId, at: Date.now(), hinted }).then(
       (s) => {
         statsRef.current = s
       },
@@ -123,7 +130,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
     later(() => setRods([...steps[0]]), 500)
     steps.slice(1).forEach((s, i) => later(() => setRods([...s]), 500 + 750 * (i + 1)))
     later(() => setPhase('reviewed'), 500 + 750 * steps.length)
-  }, [advance, mode, onRecord, pattern, phase, rods, sessionId, settings.sound])
+  }, [advance, hinted, mode, onRecord, pattern, phase, rods, sessionId, settings.sound])
 
   /** 珠を動かすたびに、正解の配置になったら自動で正解にする */
   const handleChange = useCallback(
@@ -136,13 +143,13 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter') return
+      if (e.key !== 'Enter' || helpOpen) return
       if (phase === 'answer') confirm()
       else if (phase === 'reviewed') advance()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [advance, confirm, phase])
+  }, [advance, confirm, helpOpen, phase])
 
   if (phase === 'done' || !pattern) {
     return <Summary mode={mode} results={results} onExit={onExit} />
@@ -158,6 +165,19 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
         <span className="mono muted">
           {index + 1} / {total}
         </span>
+        {(phase === 'answer' || phase === 'reviewed') && (
+          <button
+            type="button"
+            className="icon-btn help-btn"
+            onClick={() => {
+              setHelpOpen(true)
+              if (phase === 'answer') setHinted(true)
+            }}
+            aria-label="考え方を見る"
+          >
+            ?
+          </button>
+        )}
         <button type="button" className="icon-btn" onClick={onExit} aria-label="終了">
           ×
         </button>
@@ -172,6 +192,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
           {phase === 'correct' && (
             <span className="ok pop">
               正解 <span className="mono">{(last.ms / 1000).toFixed(2)}秒</span>
+              {last.hinted && <span className="muted">（ヒントあり）</span>}
             </span>
           )}
           {reviewing && last && (
@@ -181,6 +202,8 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
                 {' '}
                 （あなた: <span className="mono">{last.given}</span>・{CATEGORY_LABEL[classify(pattern)]}）
               </span>
+              <br />
+              <span className="mono rule-inline">{explain(pattern).rule}</span>
             </span>
           )}
         </div>
@@ -213,6 +236,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
           </button>
         )}
       </div>
+      {helpOpen && <HelpSheet pattern={pattern} onClose={() => setHelpOpen(false)} />}
     </div>
   )
 }

@@ -6,9 +6,10 @@ interface Props {
   settings: Settings
   baseMs: number | null
   onStart: (mode: Mode) => void
+  onOpenGuide: () => void
 }
 
-export function Home({ stats, settings, baseMs, onStart }: Props) {
+export function Home({ stats, settings, baseMs, onStart, onOpenGuide }: Props) {
   const { measured, weak, graduated } = summarize(stats, baseMs)
 
   return (
@@ -68,8 +69,13 @@ export function Home({ stats, settings, baseMs, onStart }: Props) {
         </button>
       </div>
 
+      <button type="button" className="guide-link" onClick={onOpenGuide}>
+        <span>考え方ガイド</span>
+        <span className="muted small">4つの考え方と補数の早見表</span>
+      </button>
+
       <p className="muted small">
-        そろばんに置かれた数に、上の数を足す／引くように珠をタップで弾きます。正解の配置になると自動で次へ進みます。
+        そろばんに置かれた数に、上の数を足す／引くように珠をタップで弾きます。正解の配置になると自動で次へ進みます。考え方に迷ったら出題中の「?」。
       </p>
     </section>
   )
