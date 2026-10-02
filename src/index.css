@@ -300,8 +300,17 @@ small {
   fill: transparent;
 }
 
+.soroban.interactive {
+  /* 珠を掴んでいる間に画面がスクロール・ズームしないように */
+  touch-action: none;
+}
+
 .soroban.interactive .bead {
-  cursor: pointer;
+  cursor: grab;
+}
+
+.soroban.interactive .bead:active {
+  cursor: grabbing;
 }
 
 .soroban .bead path {
