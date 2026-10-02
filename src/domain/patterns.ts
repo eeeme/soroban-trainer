@@ -27,3 +27,23 @@ export const ALL_PATTERNS: readonly Pattern[] = (['add', 'sub'] as const).flatMa
     Array.from({ length: 9 }, (_, i) => ({ op, a, n: i + 1 })),
   ).flat(),
 )
+
+export const ALL_PATTERN_IDS: readonly PatternId[] = ALL_PATTERNS.map(patternId)
+
+/**
+ * 出題時にそろばんに置く値。
+ * 加算は一の位 a のみ（十の位は繰り上がり先として 0）。
+ * 減算は借りに備えて十の位に 1 を置く（10 + a）。
+ */
+export function startValue(p: Pattern): number {
+  return p.op === 'add' ? p.a : 10 + p.a
+}
+
+export function answerValue(p: Pattern): number {
+  return p.op === 'add' ? p.a + p.n : 10 + p.a - p.n
+}
+
+/** 表示用ラベル（例: `8+5` / `12−6`） */
+export function patternLabel(p: Pattern): string {
+  return p.op === 'add' ? `${p.a}+${p.n}` : `${10 + p.a}−${p.n}`
+}

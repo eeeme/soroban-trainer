@@ -70,8 +70,8 @@
 |---|---|---|
 | 直接 | 1+3, 7−2 | 珠をそのまま入れる・払う |
 | 5の補数 | 3+4, 6−3 | 五珠を入れて一珠を払う（または逆） |
-| 10の補数 | 8+5, 12−6 | 十の位に1入れて補数を払う（または逆） |
-| 併用 | 5+6, 13−4 | 10の補数の中で5の補数も使う |
+| 10の補数 | 8+5, 13−4 | 十の位に1入れて補数を払う（または逆） |
+| 併用 | 5+6, 12−6 | 10の補数の中で5の補数も使う |
 
 **計測**
 
@@ -94,7 +94,7 @@ IndexedDB に3ストア。パターンIDは `add-3-9` / `sub-2-7` の形式。
 | ストア | 主キー | 主な項目 |
 |---|---|---|
 | attempts | 自動採番 | patternId, mode, correct, ms, sessionId, at |
-| patternStats | patternId | category, recentMs（直近5件）, recentCorrect（直近5件）, box, graduated, updatedAt |
+| patternStats | patternId | category, recentMs（直近5件）, recentCorrect（直近5件）, box, streak（箱4での連続正解数）, graduated, count, updatedAt |
 | settings | key | 1セッション問題数, 基準タイム倍率, 珠表示, 効果音 |
 
 - patternStats は attempts から再計算できるキャッシュ扱い
