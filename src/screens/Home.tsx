@@ -69,7 +69,7 @@ export function Home({ stats, settings, baseMs, onStart }: Props) {
       </div>
 
       <p className="muted small">
-        出題時のそろばんに置かれた数に、上の数を足す／引くように珠を弾いて「確定」。珠はタップで動きます。
+        そろばんに置かれた数に、上の数を足す／引くように珠をタップで弾きます。正解の配置になると自動で次へ進みます。
       </p>
     </section>
   )

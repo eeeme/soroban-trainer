@@ -322,7 +322,39 @@ small {
 }
 
 .soroban.glow .bead.on path {
-  animation: glow 450ms ease-out;
+  animation: glow 600ms ease-out;
+}
+
+.pop {
+  display: inline-block;
+  animation: pop 320ms ease-out;
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.soroban.glow .frame {
+  animation: frame-glow 700ms ease-out;
+}
+
+@keyframes frame-glow {
+  0% {
+    stroke: var(--line);
+  }
+  25% {
+    stroke: var(--ok);
+  }
+  100% {
+    stroke: var(--line);
+  }
 }
 
 @keyframes glow {

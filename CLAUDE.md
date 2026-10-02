@@ -45,6 +45,6 @@ docs/spec.md   仕様書
 - パターンID は `add-3-9` / `sub-2-7` 形式（`src/domain/patterns.ts` の `patternId()` を使う）
 - 珠の分類（直接 / 5の補数 / 10の補数 / 併用）・苦手判定・箱の昇降は `domain/` に置き、ユニットテストを書く
 - `patternStats` は `attempts` から再計算できるキャッシュ。真実の源は `attempts`
-- 反応時間は `performance.now()` で計測（出題表示 → 確定）
+- 反応時間は `performance.now()` で計測（出題表示 → 正解の配置に到達、誤答は「確定」押下まで）
 - UI 文言は日本語。ダークモード前提、数字は等幅（`font-variant-numeric: tabular-nums`）、珠のタップ領域は 44px 以上
 - MVP スコープ外（音声、課金、統計グラフ、アカウント同期、運指判定）は実装しない

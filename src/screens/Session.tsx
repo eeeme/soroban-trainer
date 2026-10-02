@@ -97,10 +97,11 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
     setQuestionKey((k) => k + 1)
   }, [choose, index, pattern])
 
-  const confirm = useCallback(() => {
+  /** 判定。正解の配置になった時点で自動的に呼ばれ、「確定」ボタンでも呼べる */
+  const confirm = useCallback((answered: readonly number[] = rods) => {
     if (!pattern || phase !== 'answer') return
     const ms = Math.round(performance.now() - startRef.current)
-    const given = rodsToValue(rods)
+    const given = rodsToValue(answered)
     const correct = given === answerValue(pattern)
     setResults((r) => [...r, { pattern, correct, ms, given }])
     void onRecord({ patternId: patternId(pattern), mode, correct, ms, sessionId, at: Date.now() }).then(
@@ -112,7 +113,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
     if (correct) {
       if (settings.sound) playCorrect()
       setPhase('correct')
-      later(advance, 450)
+      later(advance, 700)
       return
     }
     if (settings.sound) playWrong()
@@ -123,6 +124,15 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
     steps.slice(1).forEach((s, i) => later(() => setRods([...s]), 500 + 750 * (i + 1)))
     later(() => setPhase('reviewed'), 500 + 750 * steps.length)
   }, [advance, mode, onRecord, pattern, phase, rods, sessionId, settings.sound])
+
+  /** 珠を動かすたびに、正解の配置になったら自動で正解にする */
+  const handleChange = useCallback(
+    (next: number[]) => {
+      setRods(next)
+      if (pattern && rodsToValue(next) === answerValue(pattern)) confirm(next)
+    },
+    [confirm, pattern],
+  )
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -159,7 +169,11 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
           {pattern.n}
         </div>
         <div className="feedback">
-          {phase === 'correct' && <span className="ok mono">{(last.ms / 1000).toFixed(2)}秒</span>}
+          {phase === 'correct' && (
+            <span className="ok pop">
+              正解 <span className="mono">{(last.ms / 1000).toFixed(2)}秒</span>
+            </span>
+          )}
           {reviewing && last && (
             <span className="ng">
               <span className="mono">{patternLabel(pattern)} = {answerValue(pattern)}</span>
@@ -175,7 +189,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
       <div className="board">
         <Soroban
           values={rods}
-          onChange={phase === 'answer' ? setRods : undefined}
+          onChange={phase === 'answer' ? handleChange : undefined}
           glow={phase === 'correct'}
           faint={!settings.showBeads && phase === 'answer'}
           transitionMs={reviewing ? 280 : 90}
@@ -188,7 +202,7 @@ export function Session({ mode, stats, settings, baseMs, onRecord, onExit }: Pro
             <button type="button" className="btn ghost" onClick={() => setRods(toRods(startValue(pattern)))}>
               戻す
             </button>
-            <button type="button" className="btn primary" onClick={confirm}>
+            <button type="button" className="btn primary" onClick={() => confirm()}>
               確定
             </button>
           </>
