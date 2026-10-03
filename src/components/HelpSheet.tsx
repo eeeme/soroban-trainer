@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CATEGORY_LABEL, solutionSteps } from '../domain/classify.ts'
 import { explain } from '../domain/method.ts'
 import { patternLabel, type Pattern } from '../domain/patterns.ts'
@@ -10,6 +10,8 @@ interface Props {
 }
 
 const STEP_MS = 900
+/** 正解の状態で止める時間 */
+const HOLD_MS = 1600
 
 /** 今の問題の考え方と、珠の動きのお手本 */
 export function HelpSheet({ pattern, onClose }: Props) {
@@ -17,33 +19,19 @@ export function HelpSheet({ pattern, onClose }: Props) {
   const steps = solutionSteps(pattern)
   /** -1 = 出題時の状態、0.. = steps[i+1] まで進んだ状態 */
   const [shown, setShown] = useState(-1)
-  const timers = useRef<number[]>([])
-
-  const clear = () => {
-    timers.current.forEach((t) => clearTimeout(t))
-    timers.current = []
-  }
-
   const stepCount = m.steps.length
 
-  const schedule = () =>
-    Array.from({ length: stepCount }, (_, i) => window.setTimeout(() => setShown(i), STEP_MS * (i + 1)))
-
-  const play = () => {
-    clear()
-    setShown(-1)
-    timers.current = schedule()
-  }
-
-  // 開いたときに1回再生
+  // 出題時の状態 → 1手ずつ → 正解で少し止めて → 最初に戻る、を閉じるまで繰り返す
   useEffect(() => {
-    const ts = Array.from({ length: stepCount }, (_, i) =>
-      window.setTimeout(() => setShown(i), STEP_MS * (i + 1)),
-    )
-    return () => ts.forEach((t) => clearTimeout(t))
+    let timer = 0
+    const next = (i: number) => {
+      setShown(i)
+      const wait = i === -1 ? STEP_MS : i === stepCount - 1 ? HOLD_MS : STEP_MS
+      timer = window.setTimeout(() => next(i === stepCount - 1 ? -1 : i + 1), wait)
+    }
+    timer = window.setTimeout(() => next(0), STEP_MS)
+    return () => clearTimeout(timer)
   }, [stepCount])
-
-  useEffect(() => () => timers.current.forEach((t) => clearTimeout(t)), [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -72,13 +60,10 @@ export function HelpSheet({ pattern, onClose }: Props) {
             ))}
           </ol>
           <div className="help-board">
-            <Soroban values={steps[shown + 1]} transitionMs={300} />
+            <Soroban values={steps[shown + 1]} transitionMs={shown === -1 ? 0 : 300} />
           </div>
         </div>
         <div className="actions">
-          <button type="button" className="btn ghost" onClick={play}>
-            もう一度
-          </button>
           <button type="button" className="btn primary" onClick={onClose}>
             自分で弾く
           </button>
